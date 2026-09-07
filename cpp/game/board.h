@@ -7,6 +7,7 @@
 #ifndef GAME_BOARD_H_
 #define GAME_BOARD_H_
 
+#include <cstdint>
 #include "../core/global.h"
 #include "../core/hash.h"
 #include "../external/nlohmann_json/json.hpp"
@@ -101,12 +102,12 @@ struct Board
   static bool IS_ZOBRIST_INITALIZED;
   static Hash128 ZOBRIST_SIZE_X_HASH[MAX_LEN+1];
   static Hash128 ZOBRIST_SIZE_Y_HASH[MAX_LEN+1];
-  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][4];
+  static Hash128 ZOBRIST_BOARD_HASH[MAX_ARR_SIZE][6];
   static Hash128 ZOBRIST_MOVENUM_HASH[MAX_ARR_SIZE];
   static Hash128 ZOBRIST_BPASSNUM_HASH[MAX_ARR_SIZE];
   static Hash128 ZOBRIST_WPASSNUM_HASH[MAX_ARR_SIZE];
-  static Hash128 ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][4];
-  static Hash128 ZOBRIST_PLAYER_HASH[4];
+  static Hash128 ZOBRIST_BOARD_HASH2[MAX_ARR_SIZE][6];
+  static Hash128 ZOBRIST_PLAYER_HASH[6];
   static const Hash128 ZOBRIST_GAME_IS_OVER;
 
   //Structs---------------------------------------
@@ -120,7 +121,7 @@ struct Board
 
   //Functions------------------------------------
 
-  bool isLegal(Loc loc, Player pla) const;
+  bool isLegalGom(Loc loc, Player pla) const;
   //Check if this location is on the board
   bool isOnBoard(Loc loc) const;
   //Is this board empty?
@@ -137,13 +138,21 @@ struct Board
   //Returns false if location or color were out of range.
   bool setStone(Loc loc, Color color);
 
+
+
+  // bool setStoneDots(Loc loc, Color color);
+  bool isLegal(Loc loc, Player pla) const;
+  void playMoveAssumeLegal(Loc loc, Player color);
+  void bufDfs(int x, int y, Color color) const;
+
+
   // Same, but sets multiple stones, and only requires that the final configuration contain no zero-liberty groups.
   // If it does contain a zero liberty group, fails and returns false and leaves the board in an arbitrarily changed but
   // valid state. Also returns false if any location is specified more than once.
   bool setStones(std::vector<Move> placements);
 
   //Plays the specified move, assuming it is legal.
-  void playMoveAssumeLegal(Loc loc, Player pla);
+  void playMoveAssumeLegalGom(Loc loc, Player pla);
 
   
   Hash128 getSitHash(Player pla) const;
@@ -167,6 +176,7 @@ struct Board
   int x_size;                  //Horizontal size of board
   int y_size;                  //Vertical size of board
   Color colors[MAX_ARR_SIZE];  //Color of each location on the board.
+  mutable uint8_t dfs_buf[MAX_ARR_SIZE];  //Color of each location on the board.
   int movenum; //how many moves
   int stonenum; //how many stones on board
 
@@ -181,6 +191,7 @@ struct Board
 
   private:
   void init(int xS, int yS);
+
 
   friend std::ostream& operator<<(std::ostream& out, const Board& board);
 

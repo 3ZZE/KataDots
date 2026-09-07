@@ -33,7 +33,9 @@ static constexpr Color C_EMPTY = 0;
 static constexpr Color C_BLACK = 1;
 static constexpr Color C_WHITE = 2;
 static constexpr Color C_WALL = 3;
-static constexpr int NUM_BOARD_COLORS = 4;
+static constexpr Color C_BLACK_CAPTURED = 4;
+static constexpr Color C_WHITE_CAPTURED = 5;
+static constexpr int NUM_BOARD_COLORS = 6;
 
 typedef char MovePriority;
 static const MovePriority MP_NORMAL = 126;

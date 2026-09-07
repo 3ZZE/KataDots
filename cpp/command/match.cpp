@@ -38,13 +38,13 @@ struct MatchResultOneBot {
 
 
 std::string getCurrentTimeString() {
-  // »ñÈ¡µ±Ç°Ê±¼äµã
+  // ï¿½ï¿½È¡ï¿½ï¿½Ç°Ê±ï¿½ï¿½ï¿½
   auto now = std::chrono::system_clock::now();
 
-  // ×ª»»Îª time_t ÀàÐÍ
+  // ×ªï¿½ï¿½Îª time_t ï¿½ï¿½ï¿½ï¿½
   std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
 
-  // ×ª»»Îª tm ½á¹¹
+  // ×ªï¿½ï¿½Îª tm ï¿½á¹¹
   std::tm now_tm;
 #if defined(_MSC_VER)  // MSVC (Visual Studio)
   localtime_s(&now_tm, &now_time_t);
@@ -52,11 +52,11 @@ std::string getCurrentTimeString() {
   localtime_r(&now_time_t, &now_tm);
 #endif
 
-  // »ñÈ¡ºÁÃë²¿·Ö
+  // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ë²¿ï¿½ï¿½
   auto duration = now.time_since_epoch();
   auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration) % 1000;
 
-  // ¸ñÊ½»¯Ê±¼ä×Ö·û´®
+  // ï¿½ï¿½Ê½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
   std::ostringstream oss;
   oss << std::put_time(&now_tm, "%Y-%m-%d-%H-%M-%S");
   oss << '-' << std::setfill('0') << std::setw(3) << millis.count();
@@ -285,7 +285,15 @@ int MainCmds::match(const vector<string>& args) {
         };
         gameData = gameRunner->runGame(
           seed, botSpecB, botSpecW, NULL, logger,
-          shouldStopFunc, shouldPause, nullptr, afterInitialization, nullptr
+          shouldStopFunc, shouldPause, nullptr, afterInitialization,
+          [](const Board& board, const BoardHistory& hist, Player pla, Loc loc,
+             const std::vector<double>&, const std::vector<double>&, const Search*) {
+            Board boardAfterMove(board);
+            BoardHistory histAfterMove(hist);
+            histAfterMove.makeBoardMoveAssumeLegal(boardAfterMove, loc, pla);
+            Board::printBoard(std::cout, boardAfterMove, loc, &histAfterMove.moveHistory);
+            std::cout << std::endl;
+          }
         );
       }
 

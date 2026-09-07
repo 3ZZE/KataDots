@@ -703,25 +703,25 @@ void NNEvaluator::evaluate(
     int legalCount = 0;
 
     const GameLogic::ResultsBeforeNN& resultsBeforeNN = nnInputParamsWithResultsBeforeNN.resultsBeforeNN;
-    if(resultsBeforeNN.myOnlyLoc == Board::NULL_LOC) {
-      for(int i = 0; i < policySize; i++) {
+    for(int i = 0; i < policySize; i++) {
         Loc loc = NNPos::posToLoc(i, xSize, ySize, nnXLen, nnYLen);
         isLegal[i] = history.isLegal(board, loc, nextPlayer);
-      }
-    } 
-    else  // assume all other moves are illegal
-    {
-      for(int i = 0; i < policySize; i++) {
-        isLegal[i] = false;
-      }
-      isLegal[NNPos::locToPos(resultsBeforeNN.myOnlyLoc, xSize, nnXLen, nnYLen)] = true;
-      if(
-        resultsBeforeNN.winner != nextPlayer &&
-        (resultsBeforeNN.myOnlyLoc == Board::PASS_LOC || 
-         history.rules.firstPassWin ||
-         history.rules.VCNRule != Rules::VCNRULE_NOVC))
-        isLegal[NNPos::locToPos(Board::PASS_LOC, xSize, nnXLen, nnYLen)] = true;
     }
+    // if(resultsBeforeNN.myOnlyLoc == Board::NULL_LOC) {
+    // } 
+    // else  // assume all other moves are illegal
+    // {
+    //   for(int i = 0; i < policySize; i++) {
+    //     isLegal[i] = false;
+    //   }
+    //   isLegal[NNPos::locToPos(resultsBeforeNN.myOnlyLoc, xSize, nnXLen, nnYLen)] = true;
+    //   if(
+    //     resultsBeforeNN.winner != nextPlayer &&
+    //     (resultsBeforeNN.myOnlyLoc == Board::PASS_LOC || 
+    //      history.rules.firstPassWin ||
+    //      history.rules.VCNRule != Rules::VCNRULE_NOVC))
+    //     isLegal[NNPos::locToPos(Board::PASS_LOC, xSize, nnXLen, nnYLen)] = true;
+    // }
 
 #ifdef FORGOMOCUP
     // disallow pass when unnecessary

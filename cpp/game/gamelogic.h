@@ -31,7 +31,9 @@ namespace GameLogic {
   std::vector<Loc> getFourAttackLocs(const Board& board, const Rules& rules, Player pla);
 
   //C_EMPTY = draw, C_WALL = not finished 
-  Color checkWinnerAfterPlayed(const Board& board, const BoardHistory& hist, Player pla, Loc loc);
+  Color checkWinnerAfterPlayedGom(const Board& board, const BoardHistory& hist, Player pla, Loc loc);
+
+  Color checkWinnerAfterPlayed( const Board& board, const BoardHistory& hist, Player pla, Loc loc);
 
 
   //some results calculated before calculating NN
