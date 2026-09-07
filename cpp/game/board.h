@@ -121,7 +121,6 @@ struct Board
 
   //Functions------------------------------------
 
-  bool isLegalGom(Loc loc, Player pla) const;
   //Check if this location is on the board
   bool isOnBoard(Loc loc) const;
   //Is this board empty?
@@ -129,9 +128,6 @@ struct Board
   //Count the number of stones on the board
   int numStonesOnBoard() const;
   int numPlaStonesOnBoard(Player pla) const;
-
-  bool isForbidden(Loc loc) const;
-  bool isForbiddenAlreadyPlayed(Loc loc) const;
 
   //Sets the specified stone if possible, including overwriting existing stones.
   //Resolves any captures and/or suicides that result from setting that stone, including deletions of the stone itself.
@@ -151,10 +147,6 @@ struct Board
   // valid state. Also returns false if any location is specified more than once.
   bool setStones(std::vector<Move> placements);
 
-  //Plays the specified move, assuming it is legal.
-  void playMoveAssumeLegalGom(Loc loc, Player pla);
-
-  
   Hash128 getSitHash(Player pla) const;
   
 

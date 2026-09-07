@@ -8,7 +8,6 @@
 #include "../search/asyncbot.h"
 #include "../search/searchnode.h"
 #include "../dataio/files.h"
-#include "../game/randomopening.h"
 
 #include "../core/test.h"
 
@@ -236,7 +235,6 @@ void GameInitializer::initShared(ConfigParser& cfg, Logger& logger) {
   }
   
   noResultRandRadius = cfg.contains("noResultRandRadius") ? cfg.getDouble("noResultRandRadius", 0.0, 1.0) : 0.0;
-  fourAttackPolicyReduceMean = cfg.contains("fourAttackPolicyReduceMean") ? cfg.getDouble("fourAttackPolicyReduceMean", 0.0, 3.0) : 0.0;
 }
 
 GameInitializer::~GameInitializer()
@@ -268,13 +266,6 @@ void GameInitializer::createGame(
   lock_guard<std::mutex> lock(createGameMutex);
   createGameSharedUnsynchronized(board,pla,hist,initialPosition,playSettings,otherGameProps,startPosSample);
   
-  params.fourAttackPolicyReduce = 0.0;
-  if(fourAttackPolicyReduceMean > 1e-30)
-  {
-    do {
-      params.fourAttackPolicyReduce = rand.nextExponential() * fourAttackPolicyReduceMean;
-    } while(params.fourAttackPolicyReduce > 6.0);
-  }
 
   if(noResultRandRadius > 1e-30) {
     double mean = params.noResultUtilityForWhite;
@@ -770,7 +761,6 @@ static NNRawStats computeNNRawStats(const Search* bot, const Board& board, const
   NNResultBuf buf;
   MiscNNInputParams nnInputParams;
   nnInputParams.noResultUtilityForWhite = bot->searchParams.noResultUtilityForWhite;
-  nnInputParams.fourAttackPolicyReduce = bot->searchParams.fourAttackPolicyReduce;
   Board b = board;
   bot->nnEvaluator->evaluate(b,hist,pla,nnInputParams,buf,false);
   NNOutput& nnOutput = *(buf.result);
@@ -1216,7 +1206,6 @@ FinishedGameData* Play::runGame(
   gameData->gameHash.hash1 = gameRand.nextUInt64();
 
   gameData->noResultUtilityForWhite = botSpecB.baseParams.noResultUtilityForWhite;
-  gameData->fourAttackPolicyReduce = botSpecB.baseParams.fourAttackPolicyReduce;
   gameData->playoutDoublingAdvantagePla = otherGameProps.playoutDoublingAdvantagePla;
   gameData->playoutDoublingAdvantage = otherGameProps.playoutDoublingAdvantage;
 

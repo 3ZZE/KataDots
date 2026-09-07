@@ -183,7 +183,6 @@ add_executable(katago
   game/board.cpp
   game/rules.cpp
   game/gamelogic.cpp
-  game/randomopening.cpp
   game/boardhistory.cpp
   game/graphhash.cpp
   dataio/sgf.cpp
@@ -239,7 +238,6 @@ add_executable(katago
   command/genbook.cpp
   command/gputest.cpp
   command/gtp.cpp
-  command/gomprotocol.cpp
   command/match.cpp
   command/matchauto.cpp
   command/misc.cpp
@@ -248,9 +246,6 @@ add_executable(katago
   command/selfplay.cpp
   command/distill.cpp
   command/tune.cpp
-  forbiddenPoint/ForbiddenPointFinder.cpp
-  vcfsolver/VCFsolver.cpp
-  vcfsolver/VCFHashTable.cpp
   main.cpp
   )
 

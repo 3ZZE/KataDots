@@ -103,10 +103,6 @@ TimeControls TimeControls::canadianOrByoYomiTime(
   return tc;
 }
 
-TimeControls TimeControls::gomocupTime(double mainTime, double perMoveTime) {
-  return fischerCappedTime(mainTime, 0, mainTime, perMoveTime);
-}
-
 std::string TimeControls::toDebugString(const Board& board, const BoardHistory& hist, double lagBuffer) const {
   std::ostringstream out;
   out << "originalMainTime " << originalMainTime;
@@ -280,11 +276,6 @@ void TimeControls::getTime(const Board& board, const BoardHistory& hist, double 
 
   int maxMoveUntilEnd = (boardArea - numStonesOnBoard) / 2;
   double minTimePerMove = 0.07;
-#ifdef FORGOMOCUP
-
-  minTimePerMove = boardArea <= 225 ? 0.5 : 0.01;  // delay of piskvork. for big board fast game just ignore it
-#endif  // FORGOMOCUP
-
 
   //gomocup time handling
   if(increment == 0 && numPeriodsLeftIncludingCurrent == 0) {

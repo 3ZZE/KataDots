@@ -115,7 +115,6 @@ class GameInitializer {
 
 
   double noResultRandRadius;
-  double fourAttackPolicyReduceMean;
 
   std::vector<Sgf::PositionSample> startPoses;
   std::vector<double> startPosCumProbs;

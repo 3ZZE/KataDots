@@ -623,9 +623,6 @@ void NNEvaluator::evaluate(
   buf.boardXSizeForServer = board.x_size;
   buf.boardYSizeForServer = board.y_size;
 
-  MiscNNInputParams nnInputParamsWithResultsBeforeNN = nnInputParams;
-  nnInputParamsWithResultsBeforeNN.resultsBeforeNN.init(board, history, nextPlayer, nnInputParams.useVCFInput);
-
   if(!debugSkipNeuralNet) {
     int rowSpatialLen = NNModelVersion::getNumSpatialFeatures(modelVersion) * nnXLen * nnYLen;
     if(buf.rowSpatial == NULL) {
@@ -649,11 +646,11 @@ void NNEvaluator::evaluate(
 
     static_assert(NNModelVersion::latestInputsVersionImplemented == 102, "");
     if(inputsVersion == 7)
-      NNInputs::fillRowV7(board, history, nextPlayer, nnInputParamsWithResultsBeforeNN, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
+      NNInputs::fillRowV7(board, history, nextPlayer, nnInputParams, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
     else if(inputsVersion == 101)
-      NNInputs::fillRowV101(board, history, nextPlayer, nnInputParamsWithResultsBeforeNN, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
+      NNInputs::fillRowV101(board, history, nextPlayer, nnInputParams, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
     else if(inputsVersion == 102)
-      NNInputs::fillRowV102(board, history, nextPlayer, nnInputParamsWithResultsBeforeNN, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
+      NNInputs::fillRowV102(board, history, nextPlayer, nnInputParams, nnXLen, nnYLen, inputsUseNHWC, buf.rowSpatial, buf.rowGlobal);
     else
       ASSERT_UNREACHABLE;
   }
@@ -702,35 +699,10 @@ void NNEvaluator::evaluate(
     bool isLegal[NNPos::MAX_NN_POLICY_SIZE];
     int legalCount = 0;
 
-    const GameLogic::ResultsBeforeNN& resultsBeforeNN = nnInputParamsWithResultsBeforeNN.resultsBeforeNN;
     for(int i = 0; i < policySize; i++) {
         Loc loc = NNPos::posToLoc(i, xSize, ySize, nnXLen, nnYLen);
         isLegal[i] = history.isLegal(board, loc, nextPlayer);
     }
-    // if(resultsBeforeNN.myOnlyLoc == Board::NULL_LOC) {
-    // } 
-    // else  // assume all other moves are illegal
-    // {
-    //   for(int i = 0; i < policySize; i++) {
-    //     isLegal[i] = false;
-    //   }
-    //   isLegal[NNPos::locToPos(resultsBeforeNN.myOnlyLoc, xSize, nnXLen, nnYLen)] = true;
-    //   if(
-    //     resultsBeforeNN.winner != nextPlayer &&
-    //     (resultsBeforeNN.myOnlyLoc == Board::PASS_LOC || 
-    //      history.rules.firstPassWin ||
-    //      history.rules.VCNRule != Rules::VCNRULE_NOVC))
-    //     isLegal[NNPos::locToPos(Board::PASS_LOC, xSize, nnXLen, nnYLen)] = true;
-    // }
-
-#ifdef FORGOMOCUP
-    // disallow pass when unnecessary
-    int allowPassUntilRemainLocs = history.rules.basicRule == Rules::BASICRULE_RENJU ? 10 : 0;
-    bool allowPass = history.rules.firstPassWin || history.rules.VCNRule != Rules::VCNRULE_NOVC ||
-                     board.numStonesOnBoard() + allowPassUntilRemainLocs >= board.x_size * board.y_size;
-    if(!allowPass)
-      isLegal[NNPos::locToPos(Board::PASS_LOC, xSize, nnXLen, nnYLen)] = false;
-#endif
 
     for(int i = 0; i<policySize; i++) {
       float policyValue;
@@ -744,14 +716,6 @@ void NNEvaluator::evaluate(
       policy[i] = policyValue;
       if(policyValue > maxPolicy)
         maxPolicy = policyValue;
-    }
-
-    //four attack policy reduce
-    if(nnInputParams.fourAttackPolicyReduce != 0) {
-      vector<Loc> fourLocs = GameLogic::getFourAttackLocs(board, history.rules, nextPlayer);
-      for(int i = 0; i < fourLocs.size(); i++) {
-        policy[NNPos::locToPos(fourLocs[i], xSize, nnXLen, nnYLen)] -= nnInputParams.fourAttackPolicyReduce;
-      }
     }
 
     assert(legalCount > 0);
@@ -805,32 +769,14 @@ void NNEvaluator::evaluate(
         double varTimeLeftPreSoftplus = buf.result->varTimeLeft;
         double shorttermWinlossErrorPreSoftplus = buf.result->shorttermWinlossError;
 
-        
-        if(resultsBeforeNN.winner == C_EMPTY) {  // draw
-          winProb = 0.0;
-          lossProb = 0.0;
-          noResultProb = 1.0;
-          ASSERT_UNREACHABLE;
-        } 
-        else if(resultsBeforeNN.winner == nextPlayer) {  // next player win
-          winProb = 1.0;
-          lossProb = 0.0;
-          noResultProb = 0.0;
-        } 
-        else if(resultsBeforeNN.winner == getOpp(nextPlayer)) {  // opp win
-          winProb = 0.0;
-          lossProb = 1.0;
-          noResultProb = 0.0;
-        } 
-        else { //no sure results
+        {
           // Softmax
           double maxLogits = std::max(std::max(winLogits, lossLogits), noResultLogits);
           winProb = exp(winLogits - maxLogits);
           lossProb = exp(lossLogits - maxLogits);
           noResultProb = exp(noResultLogits - maxLogits);
+        }
 
-        } 
-       
         double probSum = winProb + lossProb + noResultProb;
         winProb /= probSum;
         lossProb /= probSum;

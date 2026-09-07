@@ -600,27 +600,6 @@ vector<SearchParams> Setup::loadParams(
     else
       params.nnPolicyTemperature = 1.0f;
 
-    if(cfg.contains("useVCFInput" + idxStr))
-      params.useVCFInput = cfg.getBool("useVCFInput" + idxStr);
-    else if(cfg.contains("useVCFInput"))
-      params.useVCFInput = cfg.getBool("useVCFInput");
-    else
-      params.useVCFInput = true;
-
-    if(cfg.contains("useForbiddenInput" + idxStr))
-      params.useForbiddenInput = cfg.getBool("useForbiddenInput" + idxStr);
-    else if(cfg.contains("useForbiddenInput"))
-      params.useForbiddenInput = cfg.getBool("useForbiddenInput");
-    else
-      params.useForbiddenInput = true;
-
-    if(cfg.contains("fourAttackPolicyReduce" + idxStr))
-      params.fourAttackPolicyReduce = cfg.getFloat("fourAttackPolicyReduce" + idxStr, 0.0f, 5.0f);
-    else if(cfg.contains("fourAttackPolicyReduce"))
-      params.fourAttackPolicyReduce = cfg.getFloat("fourAttackPolicyReduce", 0.0f, 5.0f);
-    else
-      params.fourAttackPolicyReduce = 0.0f;
-
     if(cfg.contains("subtreeValueBiasFactor"+idxStr)) params.subtreeValueBiasFactor = cfg.getDouble("subtreeValueBiasFactor"+idxStr, 0.0, 1.0);
     else if(cfg.contains("subtreeValueBiasFactor")) params.subtreeValueBiasFactor = cfg.getDouble("subtreeValueBiasFactor", 0.0, 1.0);
     else params.subtreeValueBiasFactor = 0.0;

@@ -15,8 +15,6 @@
 #include "core/using.h"
 //------------------------
 
-#include "vcfsolver/VCFsolver.h"
-
 static void printHelp(const vector<string>& args) {
   cout << endl;
   if(args.size() >= 1)
@@ -70,8 +68,6 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
     return MainCmds::genconfig(subArgs, args[0]);
   else if(subcommand == "gtp")
     return MainCmds::gtp(subArgs);
-  else if(subcommand == "gom")
-    return MainCmds::gomprotocol(subArgs);
   else if(subcommand == "tuner")
     return MainCmds::tuner(subArgs);
   else if(subcommand == "match")
@@ -124,24 +120,14 @@ int main(int argc, const char* const* argv) {
   MainArgs::makeCoutAndCerrAcceptUTF8();
 
   if(args.size() < 2) {
-#ifndef FORGOMOCUP
     printHelp(args);
     return 0;
-#else
-    // init
-    VCFsolver::init();
-    return MainCmds::gomprotocol(args);
-#endif
-    
   }
   string cmdArg = string(args[1]);
   if(cmdArg == "-h" || cmdArg == "--h" || cmdArg == "-help" || cmdArg == "--help" || cmdArg == "help") {
     printHelp(args);
     return 0;
   }
-
-  // init
-  VCFsolver::init();
 
 #if defined(OS_IS_WINDOWS)
   //On windows, uncaught exceptions reaching toplevel don't normally get printed out,

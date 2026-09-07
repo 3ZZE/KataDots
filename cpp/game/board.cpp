@@ -223,13 +223,6 @@ bool Board::isOnBoard(Loc loc) const {
   return loc >= 0 && loc < MAX_ARR_SIZE && colors[loc] != C_WALL;
 }
 
-// Check if moving here is illegal.
-bool Board::isLegalGom(Loc loc, Player pla) const {
-  if(pla != P_BLACK && pla != P_WHITE)
-    return false;
-  return loc == PASS_LOC || (loc >= 0 && loc < MAX_ARR_SIZE && (colors[loc] == C_EMPTY));
-}
-
 bool Board::isEmpty() const {
   for(int y = 0; y < y_size; y++) {
     for(int x = 0; x < x_size; x++) {
@@ -452,29 +445,6 @@ bool Board::setStones(std::vector<Move> placements) {
       return false;
   }
   return true;
-}
-
-// Plays the specified move, assuming it is legal.
-void Board::playMoveAssumeLegalGom(Loc loc, Player pla) {
-  pos_hash ^= ZOBRIST_MOVENUM_HASH[movenum];
-  movenum++;
-  pos_hash ^= ZOBRIST_MOVENUM_HASH[movenum];
-
-  // Pass?
-  if(loc == PASS_LOC) {
-    if(pla == C_BLACK) {
-      pos_hash ^= ZOBRIST_BPASSNUM_HASH[blackPassNum];
-      blackPassNum += 1;
-      pos_hash ^= ZOBRIST_BPASSNUM_HASH[blackPassNum];
-    }
-    if(pla == C_WHITE) {
-      pos_hash ^= ZOBRIST_WPASSNUM_HASH[whitePassNum];
-      whitePassNum += 1;
-      pos_hash ^= ZOBRIST_WPASSNUM_HASH[whitePassNum];
-    }
-    return;
-  }
-  setStone(loc, pla);
 }
 
 Hash128 Board::getSitHash(Player pla) const {

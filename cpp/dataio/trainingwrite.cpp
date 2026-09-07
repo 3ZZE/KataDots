@@ -64,7 +64,6 @@ FinishedGameData::FinishedGameData()
    gameHash(),
   
    noResultUtilityForWhite(0.0),
-   fourAttackPolicyReduce(0.0),
    playoutDoublingAdvantagePla(P_BLACK),
    playoutDoublingAdvantage(0.0),
 
@@ -302,14 +301,9 @@ void TrainingWriteBuffers::addRow(
   MiscNNInputParams nnInputParams;
   {
     nnInputParams.noResultUtilityForWhite = data.noResultUtilityForWhite;
-    nnInputParams.fourAttackPolicyReduce = data.fourAttackPolicyReduce;
     //Note: this is coordinated with the fact that selfplay does not use this feature on side positions
     if(!isSidePosition)
       nnInputParams.playoutDoublingAdvantage = getOpp(nextPlayer) == data.playoutDoublingAdvantagePla ? -data.playoutDoublingAdvantage : data.playoutDoublingAdvantage;
-
-    nnInputParams.useForbiddenInput = rand.nextBool(TRAINING_DATA_FORBIDDEN_FEATURE_PROB);
-    nnInputParams.useVCFInput = rand.nextBool(TRAINING_DATA_VCF_PROB) && hist.rules.maxMoves == 0;
-    nnInputParams.resultsBeforeNN.init(board, hist, nextPlayer, nnInputParams.useVCFInput);
 
     bool inputsUseNHWC = false;
     float* rowBin = binaryInputNCHWUnpacked;

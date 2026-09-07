@@ -63,7 +63,6 @@ struct FinishedGameData {
   Hash128 gameHash;
 
   double noResultUtilityForWhite;
-  double fourAttackPolicyReduce;
   Player playoutDoublingAdvantagePla;
   double playoutDoublingAdvantage;
   bool hitTurnLimit;
