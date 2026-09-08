@@ -78,9 +78,14 @@ Color GameLogic::checkWinnerAfterPlayed(
     }
 
   int captured_black = 0;
+  int maybe_captured_black = 0;
   for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
-        if (board.colors[i] == C_BLACK_CAPTURED &&  ((board.dfs_buf[i] & 2) == 2) ) {
-            captured_black++;
+        if (board.colors[i] == C_BLACK_CAPTURED  ) {
+            if ((board.dfs_buf[i] & 2) == 2) {
+                captured_black++;
+            } else {
+                maybe_captured_black++;
+            }
         }
     }
 
@@ -116,16 +121,22 @@ Color GameLogic::checkWinnerAfterPlayed(
     }
 
   int captured_white = 0;
+  int maybe_captured_white = 0;
+
   for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
-        if (board.colors[i] == C_WHITE_CAPTURED  &&  ((board.dfs_buf[i] & 2) == 2)) {
-            captured_white++;
+        if (board.colors[i] == C_WHITE_CAPTURED) {
+            if ((board.dfs_buf[i] & 2) == 2) {
+                captured_white++;
+            } else {
+                maybe_captured_white++;
+            }
         }
     }
-  if (captured_white > captured_black + notsafe_black) {
+  if (captured_white > captured_black + maybe_captured_black + notsafe_black) {
         return C_BLACK;
     }
 
-  if (captured_black > captured_white + notsafe_white) {
+  if (captured_black > captured_white + maybe_captured_white + notsafe_white) {
         return C_WHITE;
     }
     if (notsafe_white == 0 && notsafe_black == 0) {

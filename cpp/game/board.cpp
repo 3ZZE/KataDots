@@ -125,10 +125,6 @@ void Board::init(int xS, int yS) {
   if(xS < 0 || yS < 0 || xS > MAX_LEN || yS > MAX_LEN)
     throw StringError("Board::init - invalid board size");
 
-  // if(xS % 2 != 0 || yS % 2 != 0) {
-  //   throw StringError("Board::init - odd board size");
-  // }
-
   x_size = xS;
   y_size = yS;
 
@@ -149,16 +145,16 @@ void Board::init(int xS, int yS) {
 
   pos_hash = ZOBRIST_SIZE_X_HASH[x_size] ^ ZOBRIST_SIZE_Y_HASH[y_size];
   // start cross
-  int xh = xS / 2;
-  int yh = yS / 2;
-  Loc loc = Location::getLoc(xh, yh, x_size);
-  setStone(loc, C_WHITE);
-  loc = Location::getLoc(xh-1, yh-1, x_size);
-  setStone(loc, C_WHITE);
-  loc = Location::getLoc(xh, yh-1, x_size);
-  setStone(loc, C_BLACK);
-  loc = Location::getLoc(xh-1, yh, x_size);
-  setStone(loc, C_BLACK);
+  // int xh = xS / 2;
+  // int yh = yS / 2;
+  // Loc loc = Location::getLoc(xh, yh, x_size);
+  // setStone(loc, C_WHITE);
+  // loc = Location::getLoc(xh-1, yh-1, x_size);
+  // setStone(loc, C_WHITE);
+  // loc = Location::getLoc(xh, yh-1, x_size);
+  // setStone(loc, C_BLACK);
+  // loc = Location::getLoc(xh-1, yh, x_size);
+  // setStone(loc, C_BLACK);
 
 
   Location::getAdjacentOffsets(adj_offsets, x_size);
@@ -799,9 +795,9 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
     out << "MoveNum: " << hist->size() << " ";
   out << "HASH: " << board.pos_hash << "\n";
   bool showCoords = board.x_size <= 50 && board.y_size <= 50;
-  if(showCoords) {
     const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-    out << "  ";
+  if(showCoords) {
+    out << " ";
     for(int x = 0; x < board.x_size; x++) {
       if(x <= 24) {
         out << " ";
@@ -816,8 +812,9 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
   for(int y = 0; y < board.y_size; y++) {
     if(showCoords) {
       char buf[16];
-      sprintf(buf, "%2d", board.y_size - y);
-      out << buf << ' ';
+      out << xChar[y] << ' ';
+      // sprintf(buf, "%2d", board.y_size - y);
+      // out << buf << ' ';
     }
     for(int x = 0; x < board.x_size; x++) {
       Loc loc = Location::getLoc(x, y, board.x_size);
