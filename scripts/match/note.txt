@@ -1,0 +1,6 @@
+gtp:
+../../cpp/katago gtp -model /dev/null -config ./gtp.cfg
+
+match:
+../../cpp/katago match -config match.cfg -log-file match.log -sgf-output-dir match_sgfs/ 
+
