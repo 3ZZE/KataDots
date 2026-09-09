@@ -283,17 +283,18 @@ int MainCmds::match(const vector<string>& args) {
           assert(spec.botIdx < patternBonusTables.size());
           search->setCopyOfExternalPatternBonusTable(patternBonusTables[spec.botIdx]);
         };
+        // auto oneachmove =           [](const Board& board, const BoardHistory& hist, Player pla, Loc loc,
+        //      const std::vector<double>&, const std::vector<double>&, const Search*) {
+        //     Board boardAfterMove(board);
+        //     BoardHistory histAfterMove(hist);
+        //     histAfterMove.makeBoardMoveAssumeLegal(boardAfterMove, loc, pla);
+        //     Board::printBoard(std::cout, boardAfterMove, loc, &histAfterMove.moveHistory);
+        //     std::cout << std::endl;
+        //   }
+
         gameData = gameRunner->runGame(
           seed, botSpecB, botSpecW, NULL, logger,
-          shouldStopFunc, shouldPause, nullptr, afterInitialization,
-          [](const Board& board, const BoardHistory& hist, Player pla, Loc loc,
-             const std::vector<double>&, const std::vector<double>&, const Search*) {
-            Board boardAfterMove(board);
-            BoardHistory histAfterMove(hist);
-            histAfterMove.makeBoardMoveAssumeLegal(boardAfterMove, loc, pla);
-            Board::printBoard(std::cout, boardAfterMove, loc, &histAfterMove.moveHistory);
-            std::cout << std::endl;
-          }
+          shouldStopFunc, shouldPause, nullptr, afterInitialization, nullptr
         );
       }
 

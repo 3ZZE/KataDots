@@ -1,3 +1,3 @@
 #ifndef COMPILE_MAX_BOARD_LEN
-#define COMPILE_MAX_BOARD_LEN 15 // Board::MAX_LEN
+#define COMPILE_MAX_BOARD_LEN 20 // Board::MAX_LEN
 #endif 

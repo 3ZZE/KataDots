@@ -47,6 +47,9 @@ Color GameLogic::checkWinnerAfterPlayed(
   const BoardHistory& hist,
   Player pla,
   Loc loc) {
+    if (loc == 1)  { // PASS
+        ASSERT_UNREACHABLE;
+    }
     const Color color = pla;
     const Color opp_clr = getOpp(pla);
     
@@ -140,7 +143,9 @@ Color GameLogic::checkWinnerAfterPlayed(
         return C_WHITE;
     }
     if (notsafe_white == 0 && notsafe_black == 0) {
-        return C_EMPTY;
+        assert(maybe_captured_black == 0);
+        assert(maybe_captured_white == 0);
+        return C_WHITE;
     }
     return C_WALL;
 }

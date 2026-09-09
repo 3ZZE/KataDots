@@ -284,7 +284,7 @@ bool Board::isLegal(Loc loc, Player pla) const {
   if(pla != P_BLACK && pla != P_WHITE)
     return false;
   if(loc == PASS_LOC) {
-    return true;
+    return false;
   }
   if(!(loc >= 0 && loc < MAX_ARR_SIZE && (colors[loc] == C_EMPTY))) {
     return false;
@@ -334,17 +334,7 @@ void Board::playMoveAssumeLegal(Loc loc, Player color) {
 
   // Pass?
   if(loc == PASS_LOC) {
-    if(color == C_BLACK) {
-      pos_hash ^= ZOBRIST_BPASSNUM_HASH[blackPassNum];
-      blackPassNum += 1;
-      pos_hash ^= ZOBRIST_BPASSNUM_HASH[blackPassNum];
-    }
-    if(color == C_WHITE) {
-      pos_hash ^= ZOBRIST_WPASSNUM_HASH[whitePassNum];
-      whitePassNum += 1;
-      pos_hash ^= ZOBRIST_WPASSNUM_HASH[whitePassNum];
-    }
-    return;
+        ASSERT_UNREACHABLE;
   }
 
   stonenum++;
