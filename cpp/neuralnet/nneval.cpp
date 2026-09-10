@@ -718,6 +718,19 @@ void NNEvaluator::evaluate(
         maxPolicy = policyValue;
     }
 
+    if (legalCount == 0) {
+        Board replayBoard(history.initialBoard);
+        BoardHistory replayHist = history.copyToInitial();
+        std::cout << "All board states in this game:" << std::endl;
+        Board::printBoard(std::cout, replayBoard, Board::NULL_LOC, nullptr);
+        for(size_t i = 0; i < history.moveHistory.size(); i++) {
+          Loc moveLoc = history.moveHistory[i].loc;
+          Player movePla = history.moveHistory[i].pla;
+          replayHist.makeBoardMoveAssumeLegal(replayBoard, moveLoc, movePla);
+          Board::printBoard(std::cout, replayBoard, moveLoc, &replayHist.moveHistory);
+          std::cout << std::endl;
+        }
+    }
     assert(legalCount > 0);
 
     float policySum = 0.0f;

@@ -156,7 +156,6 @@ void Board::init(int xS, int yS) {
   // loc = Location::getLoc(xh-1, yh, x_size);
   // setStone(loc, C_BLACK);
 
-
   Location::getAdjacentOffsets(adj_offsets, x_size);
 }
 
@@ -235,7 +234,9 @@ int Board::numStonesOnBoard() const {
   for(int y = 0; y < y_size; y++) {
     for(int x = 0; x < x_size; x++) {
       Loc loc = Location::getLoc(x, y, x_size);
-      if(colors[loc] == C_BLACK || colors[loc] == C_WHITE || colors[loc] == C_BLACK_CAPTURED || colors[loc] == C_WHITE_CAPTURED)
+      if(
+        colors[loc] == C_BLACK || colors[loc] == C_WHITE || colors[loc] == C_BLACK_CAPTURED ||
+        colors[loc] == C_WHITE_CAPTURED)
         num += 1;
     }
   }
@@ -327,14 +328,14 @@ bool Board::isLegal(Loc loc, Player pla) const {
 }
 
 void Board::playMoveAssumeLegal(Loc loc, Player color) {
-    // printBoard(std::cout, *this, 0, nullptr);
+  // printBoard(std::cout, *this, 0, nullptr);
   pos_hash ^= ZOBRIST_MOVENUM_HASH[movenum];
   movenum++;
   pos_hash ^= ZOBRIST_MOVENUM_HASH[movenum];
 
   // Pass?
   if(loc == PASS_LOC) {
-        ASSERT_UNREACHABLE;
+    ASSERT_UNREACHABLE;
   }
 
   stonenum++;
@@ -466,7 +467,9 @@ void Board::checkConsistency() const {
       if(colors[loc] != C_WALL)
         throw StringError(errLabel + "Non-WALL value outside of board legal area");
     } else {
-      if(colors[loc] == C_BLACK || colors[loc] == C_WHITE || colors[loc] == C_WHITE_CAPTURED || colors[loc] == C_BLACK_CAPTURED) {
+      if(
+        colors[loc] == C_BLACK || colors[loc] == C_WHITE || colors[loc] == C_WHITE_CAPTURED ||
+        colors[loc] == C_BLACK_CAPTURED) {
         tmp_pos_hash ^= ZOBRIST_BOARD_HASH[loc][colors[loc]];
         tmp_pos_hash ^= ZOBRIST_BOARD_HASH[loc][C_EMPTY];
       } else if(colors[loc] == C_EMPTY) {
@@ -522,9 +525,9 @@ char PlayerIO::colorToChar(Color c) {
     case C_EMPTY:
       return '.';
     case C_BLACK_CAPTURED:
-        return 'x';
+      return 'x';
     case C_WHITE_CAPTURED:
-        return 'o';
+      return 'o';
     default:
       return '#';
   }
@@ -785,7 +788,7 @@ void Board::printBoard(ostream& out, const Board& board, Loc markLoc, const vect
     out << "MoveNum: " << hist->size() << " ";
   out << "HASH: " << board.pos_hash << "\n";
   bool showCoords = board.x_size <= 50 && board.y_size <= 50;
-    const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+  const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
   if(showCoords) {
     out << " ";
     for(int x = 0; x < board.x_size; x++) {
@@ -888,12 +891,20 @@ Board Board::parseBoard(int xSize, int ySize, const string& s, char lineDelimite
       Loc loc = Location::getLoc(x, y, board.x_size);
       if(c == '.' || c == ' ' || c == '*' || c == ',' || c == '`')
         continue;
-      else if(c == 'o' || c == 'O') {
+      else if(c == 'O') {
         bool suc = board.setStone(loc, P_WHITE);
         if(!suc)
           throw StringError(string("Board::parseBoard - zero-liberty group near ") + Location::toString(loc, board));
-      } else if(c == 'x' || c == 'X') {
+      } else if(c == 'X') {
         bool suc = board.setStone(loc, P_BLACK);
+        if(!suc)
+          throw StringError(string("Board::parseBoard - zero-liberty group near ") + Location::toString(loc, board));
+      } else if(c == 'x') {
+        bool suc = board.setStone(loc, C_BLACK_CAPTURED);
+        if(!suc)
+          throw StringError(string("Board::parseBoard - zero-liberty group near ") + Location::toString(loc, board));
+      } else if(c == 'o') {
+        bool suc = board.setStone(loc, C_WHITE_CAPTURED);
         if(!suc)
           throw StringError(string("Board::parseBoard - zero-liberty group near ") + Location::toString(loc, board));
       } else

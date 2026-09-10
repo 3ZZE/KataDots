@@ -139,13 +139,26 @@ Color GameLogic::checkWinnerAfterPlayed(
         return C_BLACK;
     }
 
-  if (captured_black > captured_white + maybe_captured_white + notsafe_white) {
+  if (captured_black >= captured_white + maybe_captured_white + notsafe_white) {
         return C_WHITE;
     }
     if (notsafe_white == 0 && notsafe_black == 0) {
         assert(maybe_captured_black == 0);
         assert(maybe_captured_white == 0);
         return C_WHITE;
+    }
+    int empty_cnt = 0;
+    for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
+        if (board.colors[i] == C_EMPTY) {
+            empty_cnt++;
+        }
+    }
+    if (empty_cnt == 0) {
+        if (captured_black + notsafe_black + maybe_captured_black >= captured_white + notsafe_black +maybe_captured_white) {
+            return C_WHITE;
+        } else {
+            return C_BLACK;
+        }
     }
     return C_WALL;
 }
