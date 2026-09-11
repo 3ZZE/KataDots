@@ -11,6 +11,7 @@
 #include "../main.h"
 #include "../neuralnet/nneval.h"
 #include "../neuralnet/nninputs.h"
+#include "../program/setup.h"
 #include "../search/asyncbot.h"
 #include "../search/search.h"
 #include "../search/searchparams.h"
@@ -193,270 +194,65 @@ using namespace std;
 
 int MainCmds::sandbox() {
   Rand rand;
-
-  const char* xChar = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-  std::map<char, int> rev;
-  for(int i = 0; xChar[i] != '\0'; ++i)
-    rev[xChar[i]] = i;
-
   Board::initHash();
 
-  {
-    std::cout << "=== initopening2: 20 sampled first-stone locations (x,y) ===" << std::endl;
-    for(int t = 0; t < 20; t++) {
-      Player pla = P_BLACK;
-      Board b(20, 20);
-      BoardHistory h(b, pla, Rules());
-      RandomOpening::initopening2(b, h, pla, rand);
-      for(int y = 0; y < 20; y++)
-        for(int x = 0; x < 20; x++)
-          if(b.colors[Location::getLoc(x, y, 20)] != C_EMPTY)
-            std::cout << "(" << x << "," << y << ") ";
-      std::cout << std::endl;
-    }
-  }
+  // --- Set up neural net + search wrapper ---
+  const bool logToStdout = true;
+  Logger logger(nullptr, logToStdout);
 
-  {
-    for (int q = 0; q < 8; q++) {
+  ConfigParser cfg;
+  Setup::initializeSession(cfg);
 
-    std::cout << "=== initopening2: sequential 12-stone board ===" << std::endl;
+  const std::string modelFile = "/home/anton/board_games/KataDotsRemote/run_arch/data/models/b10c256n-s7755264-d2493509/model.bin.gz";
+  const std::string expectedSha256 = "";
+  const int maxConcurrentEvals = 32;
+  const int expectedConcurrentEvals = 1;
+  const int defaultMaxBatchSize = 8;
+
+  NNEvaluator* nnEval = Setup::initializeNNEvaluator(
+    modelFile, modelFile, expectedSha256, cfg, logger, rand,
+    maxConcurrentEvals, expectedConcurrentEvals,
+    Board::MAX_LEN, Board::MAX_LEN, defaultMaxBatchSize,
+    false, false, Setup::SETUP_FOR_GTP
+  );
+
+  SearchParams params;
+  params.numThreads = 1;
+  Search* search = new Search(params, nnEval, &logger, "sandbox");
+
+  // Same value computation as RandomOpening::getBoardValue (perspective of side to move)
+  auto getBoardValue = [&](Search* bot, const Board& b, const BoardHistory& h, Player np) {
+    MiscNNInputParams nnInputParams;
+    NNResultBuf buf;
+    bot->nnEvaluator->evaluate(b, h, np, nnInputParams, buf, false);
+    std::shared_ptr<NNOutput> out = std::move(buf.result);
+    double value = out->whiteWinProb ;
+    return (np == C_BLACK) ? (1.-value) : value;
+  };
+
+  // --- Generate and evaluate initRandom openings ---
+  const int numOpenings = 16;
+  for(int i = 0; i < numOpenings; i++) {
     Player pla = P_BLACK;
     Board b(20, 20);
     BoardHistory h(b, pla, Rules());
-    RandomOpening::initopening2(b, h, pla, rand);
-    std::cout << "nextPlayer = " << (pla == P_BLACK ? "B" : "W") << std::endl;
+    // RandomOpening::initRandomOpening(b, h, pla, rand);
+    RandomOpening::initBalanced(search, search, b,h, pla, rand );
+
+    double value = getBoardValue(search, b, h, pla);
+    std::cout << "=== opening " << i << ": nextPlayer=" << (pla == P_BLACK ? "B" : "W")
+              << " value=" << value << " ===" << std::endl;
     Board::printBoard(std::cout, b, 0, nullptr);
-        }
   }
 
-  {
-    std::cout << "=== first-stone distribution (10000 trials, %) ===" << std::endl;
-    const int BS = 20;
-    std::vector<int> counts(BS * BS, 0);
-    const int trials = 10000;
-    for(int t = 0; t < trials; t++) {
-      Player pla = P_BLACK;
-      Board b(BS, BS);
-      BoardHistory h(b, pla, Rules());
-      RandomOpening::initopening2(b, h, pla, rand);
-      for(int y = 0; y < BS; y++)
-        for(int x = 0; x < BS; x++) {
-          if(b.colors[Location::getLoc(x, y, BS)] != C_EMPTY)
-            counts[y * BS + x]++;
-        }
-    }
-    for(int y = BS - 1; y >= 0; y--) {
-      for(int x = 0; x < BS; x++)
-        printf("%4.1f", counts[y * BS + x] * 100.0 / trials);
-      std::cout << std::endl;
-    }
-  }
-    return 0;
+  nnEval->killServerThreads();
+  delete search;
+  delete nnEval;
 
-  Board board = Board::parseBoard(20, 20, R"(
-X X O O O X O O O O X X O X X X O O O X
-X X O O O X O X X X X X O O O O O O O O
-X O O O O X X X X X X X O O O O O O O X
-O O O O X X X X X X X X O O X X X X X X
-X O O O X X X X X X X X O O X X X X X X
-X X X X X X X X X X X X O O X X X O O O
-X X X X X X X X X X X X O O X X O O O O
-O O O O O O X X O X X X O X X O O O O X
-X O O O O O O O O O X O O X O O O O O X
-X O O O O O O O O O X O O X O O O O X O
-O O O O O O O O O X O O O X O X X X X X
-X X X X X X X X X X O O O X X O X X X X
-X X X X X X X X X X X O O O O O O O O X
-O X X X X X X X X X X X O O O O O O O O
-O O X X X X X X X X X X O O O O O . O X
-O X X X . X O O O O X X O O O O . . O X
-X X X . X O O O O O X X O O O O O O O O
-O X X X O O O O O X X X O O O O O O O X
-X X X O O O O X O X X X O O O O O X X O
-O O O X X O X X X X X X O O O O X X X X
-)");
-  BoardHistory hist(board, P_WHITE, Rules());
-
-  Board::printBoard(std::cout, board, 0, nullptr);
-    
-
-
-  auto makemove = [&](int x, int y, Player pla) {
-    Loc loc = Location::getLoc(x, y, board.x_size);
-    if(!board.isLegal(loc, pla)) {
-      std::cout << "move ilegal" << std::endl;
-    } else {
-      hist.makeBoardMoveAssumeLegal(board, loc, pla);
-    }
-    int res = GameLogic::checkWinnerAfterPlayed(board, hist, pla, loc);
-    std::cout << "res: " << res << std::endl;
-    Board::printBoard(std::cout, board, 0, nullptr);
-  };
-  // std::string s = "DDEFAADEABEDACFCADGDAHHEAEFEFD";
-
-    makemove(17, 15, P_WHITE);
-    makemove(17, 14, P_BLACK);
-    makemove(4, 15, P_WHITE);
-    makemove(16, 15, P_BLACK);
-    makemove(3, 16, P_WHITE);
-
-    // makemove(5, 9, P_WHITE);
-
-
-
-    return 0;
-
-  std::string blackS = "";  // white's moves, 2 chars each
-  getline(std::cin, blackS);
-  std::string whiteS = "";  // black's moves, 2 chars each
-  getline(std::cin, whiteS);
-
-  std::string s;
-  size_t n = std::max(whiteS.size(), blackS.size());
-  for(size_t i = 0; i < n; i += 2) {
-    if(i + 1 < whiteS.size())
-      s += whiteS.substr(i, 2);
-    if(i + 1 < blackS.size())
-      s += blackS.substr(i, 2);
-  }
-
-  Player players[2] = {P_WHITE, P_BLACK};
-  for(size_t i = 0; i + 1 < s.size(); i += 2) {
-    int x = rev[s[i]];
-    int y = rev[s[i + 1]];
-    makemove(x, y, players[(i / 2) % 2]);
-  }
-
-  // while(true) {
-  //   uint32_t x[16];
-  //   for(int i = 0; i<16; i++)
-  //     x[i] = rand.nextUInt();
-  //   std::cout.write(reinterpret_cast<const char*>(&x),sizeof(x));
-  // }
-
-  // int64_t sum = 0;
-  // for(int i = 0; i<100000; i++) {
-  //   string s = "akldjfoaijefiwofijeaofj" + Global::intToString(i);
-  //   Rand rand(s);
-  //   for(int j = 0; j<8; j++) {
-  //     sum += rand.nextUInt();
-  //   }
-  // }
-  // cout << sum << endl;
-
-  //   Board::initHash();
-
-  //   const bool logToStdout = true;
-  //   Logger logger(nullptr, logToStdout);
-  //   logger.addFile("tmp.txt");
-
-  //   NeuralNet::globalInitialize();
-
-  //   LoadedModel* loadedModel =
-  //   NeuralNet::loadModelFile("/efs/data/GoNN/selfplay/run0/modelstobetested//s9999360-d1178745-b8c128/model.txt.gz",
-  //   0);
-  //   // LoadedModel* loadedModel =
-  //   NeuralNet::loadModelFile("/efs/data/GoNN/exportedmodels/cuda/value24-140/model.txt", 0);
-  //   // LoadedModel* loadedModel =
-  //   NeuralNet::loadModelFile("/efs/data/GoNN/exportedmodels/tensorflow/value24-140/model.graph_optimized.pb", 0);
-  //   bool useFP16 = true;
-  //   bool useNHWC = true;
-  //   int maxBatchSize = 128;
-  //   int nnXLen = 14;
-  //   int nnYLen = 14;
-  //   bool requireExactNNLen = false;
-  //   bool inputsUseNHWC = true;
-  //   int gpuIdxForThisThread = 0;
-  //   ComputeContext* context = NeuralNet::createComputeContext({gpuIdxForThisThread},&logger);
-  //   ComputeHandle* gpuHandle = NeuralNet::createComputeHandle(
-  //     context,loadedModel,&logger,maxBatchSize,nnXLen,nnYLen,requireExactNNLen,inputsUseNHWC,
-  //     gpuIdxForThisThread,useFP16,useNHWC
-  //   );
-  //   InputBuffers* inputBuffers = NeuralNet::createInputBuffers(loadedModel,maxBatchSize,nnXLen,nnYLen);
-
-  //   bool* syms = NeuralNet::getSymmetriesInplace(inputBuffers);
-  //   syms[0] = false;
-  //   syms[1] = false;
-  //   syms[2] = false;
-
-  //   Rules rules;
-  //   rules.koRule = Rules::KO_POSITIONAL;
-  //   rules.scoringRule = Rules::SCORING_AREA;
-  //   rules.multiStoneSuicideLegal = true;
-  //   rules.komi = 7.5f;
-
-  //   Player pla = P_WHITE;
-  //   Board board = Board::parseBoard(9,9,R"(
-  // ...x.....
-  // .........
-  // .........
-  // .........
-  // .........
-  // ..o......
-  // .........
-  // ....x....
-  // .x.....o.
-  // )");
-
-  //   int encorePhase = 0;
-  //   BoardHistory hist(board,pla,rules,encorePhase);
-  //   // BoardHistory hist2(board2,pla,rules);
-  //   // BoardHistory hist3(board3,pla,rules);
-
-  //   int batchSize = 5;
-  //   // int batchSize = maxBatchSize;
-  //   // int batchSize = 32;
-  //   for(int i = 0; i<batchSize; i++) {
-  //     float* row = NeuralNet::getBatchEltSpatialInplace(inputBuffers,i);
-  //     float* rowGlobalInput = NeuralNet::getBatchEltGlobalInplace(inputBuffers,i);
-
-  //     double drawEquivalentWinsForWhite = 0.5;
-  //     NNInputs::fillRowV3(board, hist, pla, drawEquivalentWinsForWhite, nnXLen, nnYLen, inputsUseNHWC, row,
-  //     rowGlobalInput);
-  //     // if(i % 3 == 0)
-  //       // NNInputs::fillRowV3(board, hist, pla, row);
-  //     // else if(i % 3 == 1)
-  //     //   NNInputs::fillRowV1(board2, hist2, pla, row);
-  //     // else
-  //     //   NNInputs::fillRowV1(board3, hist3, pla, row);
-  //   }
-
-  //   vector<NNOutput*> outputs;
-  //   for(int row = 0; row<batchSize; row++) {
-  //     NNOutput* emptyOutput = new NNOutput();
-  //     emptyOutput->nnXLen = nnXLen;
-  //     emptyOutput->nnYLen = nnYLen;
-  //     outputs.push_back(emptyOutput);
-  //   }
-
-  //   NeuralNet::getOutput(gpuHandle,inputBuffers,batchSize,outputs);
-
-  //   for(int i = 0; i<outputs.size(); i++) {
-  //     NNOutput* result = outputs[i];
-  //     for(int y = 0; y<nnYLen; y++) {
-  //       for(int x = 0; x<nnXLen; x++) {
-  //         printf("%7.4f ", result->policyProbs[x+y*nnXLen]);
-  //       }
-  //       cout << endl;
-  //     }
-  //     printf("%6.4f ", result->policyProbs[nnXLen*nnYLen]);
-  //     cout << endl;
-  //     cout << result->whiteWinProb << endl;
-  //     cout << result->whiteLossProb << endl;
-  //     cout << result->whiteNoResultProb << endl;
-  //   }
-
-  //   for(int i = 0; i<outputs.size(); i++)
-  //     delete outputs[i];
-
-  //   NeuralNet::freeInputBuffers(inputBuffers);
-  //   NeuralNet::freeComputeHandle(gpuHandle);
-  //   NeuralNet::freeComputeContext(context);
-  //   NeuralNet::freeLoadedModel(loadedModel);
-
-  cout << "Done" << endl;
+  std::cout << "Done" << std::endl;
   return 0;
 }
+
 
 // #include <cuda.h>
 // #include <cublas_v2.h>

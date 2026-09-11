@@ -1251,10 +1251,9 @@ FinishedGameData* Play::runGame(
 
     if(board.numStonesOnBoard() != 0){
       cout << "board not empty when initialize opening" << endl;
-      // ASSERT_UNREACHABLE;
-}else {
+    }else {
       if(board.numStonesOnBoard() == 0) 
-        RandomOpening::initopening2(board, hist, pla, gameRand);
+        RandomOpening::initHub(botB, botW, board, hist, pla, gameRand);
     }
 
   if(playSettings.initGamesWithPolicy && otherGameProps.allowPolicyInit) {
