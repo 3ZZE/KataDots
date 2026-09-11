@@ -185,6 +185,7 @@ add_executable(katago
   game/gamelogic.cpp
   game/boardhistory.cpp
   game/graphhash.cpp
+  game/randomopening.cpp
   dataio/sgf.cpp
   dataio/numpywrite.cpp
   dataio/trainingwrite.cpp

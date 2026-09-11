@@ -1,10 +1,13 @@
 
 #include <string>
+#include <cstdio>
+#include <vector>
 #include "../core/global.h"
 #include "../core/logger.h"
 #include "../core/timer.h"
 #include "../game/board.h"
 #include "../game/boardhistory.h"
+#include "../game/randomopening.h"
 #include "../main.h"
 #include "../neuralnet/nneval.h"
 #include "../neuralnet/nninputs.h"
@@ -197,6 +200,59 @@ int MainCmds::sandbox() {
     rev[xChar[i]] = i;
 
   Board::initHash();
+
+  {
+    std::cout << "=== initopening2: 20 sampled first-stone locations (x,y) ===" << std::endl;
+    for(int t = 0; t < 20; t++) {
+      Player pla = P_BLACK;
+      Board b(20, 20);
+      BoardHistory h(b, pla, Rules());
+      RandomOpening::initopening2(b, h, pla, rand);
+      for(int y = 0; y < 20; y++)
+        for(int x = 0; x < 20; x++)
+          if(b.colors[Location::getLoc(x, y, 20)] != C_EMPTY)
+            std::cout << "(" << x << "," << y << ") ";
+      std::cout << std::endl;
+    }
+  }
+
+  {
+    for (int q = 0; q < 8; q++) {
+
+    std::cout << "=== initopening2: sequential 12-stone board ===" << std::endl;
+    Player pla = P_BLACK;
+    Board b(20, 20);
+    BoardHistory h(b, pla, Rules());
+    RandomOpening::initopening2(b, h, pla, rand);
+    std::cout << "nextPlayer = " << (pla == P_BLACK ? "B" : "W") << std::endl;
+    Board::printBoard(std::cout, b, 0, nullptr);
+        }
+  }
+
+  {
+    std::cout << "=== first-stone distribution (10000 trials, %) ===" << std::endl;
+    const int BS = 20;
+    std::vector<int> counts(BS * BS, 0);
+    const int trials = 10000;
+    for(int t = 0; t < trials; t++) {
+      Player pla = P_BLACK;
+      Board b(BS, BS);
+      BoardHistory h(b, pla, Rules());
+      RandomOpening::initopening2(b, h, pla, rand);
+      for(int y = 0; y < BS; y++)
+        for(int x = 0; x < BS; x++) {
+          if(b.colors[Location::getLoc(x, y, BS)] != C_EMPTY)
+            counts[y * BS + x]++;
+        }
+    }
+    for(int y = BS - 1; y >= 0; y--) {
+      for(int x = 0; x < BS; x++)
+        printf("%4.1f", counts[y * BS + x] * 100.0 / trials);
+      std::cout << std::endl;
+    }
+  }
+    return 0;
+
   Board board = Board::parseBoard(20, 20, R"(
 X X O O O X O O O O X X O X X X O O O X
 X X O O O X O X X X X X O O O O O O O O

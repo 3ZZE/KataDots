@@ -52,6 +52,18 @@ Color GameLogic::checkWinnerAfterPlayed(
     }
     const Color color = pla;
     const Color opp_clr = getOpp(pla);
+
+
+    int empty_cnt = 0;
+    for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
+        if (board.colors[i] == C_EMPTY) {
+            empty_cnt++;
+        }
+    }
+    if (board.x_size * board.y_size < 2 + empty_cnt) {
+        return C_WALL;
+    }
+
     
   for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
     board.dfs_buf[i] = 0;
@@ -146,12 +158,6 @@ Color GameLogic::checkWinnerAfterPlayed(
         assert(maybe_captured_black == 0);
         assert(maybe_captured_white == 0);
         return C_WHITE;
-    }
-    int empty_cnt = 0;
-    for(int i = 0; i < board.MAX_ARR_SIZE; i++) {
-        if (board.colors[i] == C_EMPTY) {
-            empty_cnt++;
-        }
     }
     if (empty_cnt == 0) {
         if (captured_black + notsafe_black + maybe_captured_black >= captured_white + notsafe_black +maybe_captured_white) {
