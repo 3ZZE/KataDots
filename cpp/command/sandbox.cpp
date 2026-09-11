@@ -197,8 +197,33 @@ int MainCmds::sandbox() {
     rev[xChar[i]] = i;
 
   Board::initHash();
-  Board board = Board(12, 12);
-  BoardHistory hist;
+  Board board = Board::parseBoard(20, 20, R"(
+X X O O O X O O O O X X O X X X O O O X
+X X O O O X O X X X X X O O O O O O O O
+X O O O O X X X X X X X O O O O O O O X
+O O O O X X X X X X X X O O X X X X X X
+X O O O X X X X X X X X O O X X X X X X
+X X X X X X X X X X X X O O X X X O O O
+X X X X X X X X X X X X O O X X O O O O
+O O O O O O X X O X X X O X X O O O O X
+X O O O O O O O O O X O O X O O O O O X
+X O O O O O O O O O X O O X O O O O X O
+O O O O O O O O O X O O O X O X X X X X
+X X X X X X X X X X O O O X X O X X X X
+X X X X X X X X X X X O O O O O O O O X
+O X X X X X X X X X X X O O O O O O O O
+O O X X X X X X X X X X O O O O O . O X
+O X X X . X O O O O X X O O O O . . O X
+X X X . X O O O O O X X O O O O O O O O
+O X X X O O O O O X X X O O O O O O O X
+X X X O O O O X O X X X O O O O O X X O
+O O O X X O X X X X X X O O O O X X X X
+)");
+  BoardHistory hist(board, P_WHITE, Rules());
+
+  Board::printBoard(std::cout, board, 0, nullptr);
+    
+
 
   auto makemove = [&](int x, int y, Player pla) {
     Loc loc = Location::getLoc(x, y, board.x_size);
@@ -212,6 +237,18 @@ int MainCmds::sandbox() {
     Board::printBoard(std::cout, board, 0, nullptr);
   };
   // std::string s = "DDEFAADEABEDACFCADGDAHHEAEFEFD";
+
+    makemove(17, 15, P_WHITE);
+    makemove(17, 14, P_BLACK);
+    makemove(4, 15, P_WHITE);
+    makemove(16, 15, P_BLACK);
+    makemove(3, 16, P_WHITE);
+
+    // makemove(5, 9, P_WHITE);
+
+
+
+    return 0;
 
   std::string blackS = "";  // white's moves, 2 chars each
   getline(std::cin, blackS);
