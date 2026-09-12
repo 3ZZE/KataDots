@@ -297,9 +297,6 @@ static bool tryInitBalanced(
   Search* bot = gameRand.nextBool(0.5) ? botB : botW;
   for(int i = 0; i < 3; i++) {
     makeEqualMove(bot, boardCopy, histCopy, nextPlayerCopy);
-    // Loc loc = getBalanceMove(bot, bot, boardCopy, hist, nextPlayerCopy, gameRand, false, 0.8);
-    //     hist.makeBoardMoveAssumeLegal(boardCopy, loc, nextPlayerCopy);
-    //     nextPlayerCopy = getOpp(nextPlayerCopy);
   }
 
   board = boardCopy;
@@ -353,11 +350,11 @@ std::vector<Opening> RandomOpening::getOpenings(
 
 void RandomOpening::initHub(Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& nextPlayer, Rand& gameRand) {
     double rand = gameRand.nextDouble();
-    RandomOpening::initBalanced(botB, botW , board, hist, nextPlayer, gameRand);
-    // if (rand < 0.8) {
-    // } else if (rand < 0.95) {
-    //     RandomOpening::initRandomOpening(board, hist, nextPlayer, gameRand);
-    // } else {
-    //     RandomOpening::initializeCross(board, hist, nextPlayer, gameRand);
-    // }
+    if (rand < 0.0) {
+        RandomOpening::initBalanced(botB, botW , board, hist, nextPlayer, gameRand);
+    } else if (rand < 0.5) {
+        RandomOpening::initRandomOpening(board, hist, nextPlayer, gameRand);
+    } else {
+        RandomOpening::initializeCross(board, hist, nextPlayer, gameRand);
+    }
 }

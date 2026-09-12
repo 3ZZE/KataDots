@@ -1250,7 +1250,7 @@ FinishedGameData* Play::runGame(
   // double balanceOpeningProb = playSettings.forSelfPlay ? 0.99 : 1.0;
 
     if(board.numStonesOnBoard() != 0){
-      cout << "board not empty when initialize opening" << endl;
+      // cout << "board not empty when initialize opening" << endl;
     }else {
       if(board.numStonesOnBoard() == 0) 
         RandomOpening::initHub(botB, botW, board, hist, pla, gameRand);

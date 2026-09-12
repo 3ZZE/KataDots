@@ -1,6 +1,10 @@
 
-#include <string>
+
+#include <filesystem>
+#include <fstream>
 #include <cstdio>
+#include <fstream>
+#include <string>
 #include <vector>
 #include "../core/global.h"
 #include "../core/logger.h"
@@ -17,6 +21,62 @@
 #include "../search/searchparams.h"
 
 using namespace std;
+
+// Write a bare SGF of a single position (no move history) using AB/AW,
+// plus a PL tag indicating the side to move.
+static void writeSgfPosition(ostream& out, const Board& board, Player nextPla) {
+  int xSize = board.x_size;
+  int ySize = board.y_size;
+  out << "(;FF[4]GM[1]";
+  if(xSize == ySize)
+    out << "SZ[" << xSize << "]";
+  else
+    out << "SZ[" << xSize << ":" << ySize << "]";
+  out << "PL[" << (nextPla == P_BLACK ? "B" : "W") << "]";
+
+  auto writeLoc = [&](Loc loc) {
+    int x = Location::getX(loc, xSize);
+    int y = Location::getY(loc, xSize);
+    static const char* chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    out << chars[x] << chars[y];
+  };
+
+  bool hasAB = false;
+  for(int y = 0; y < ySize; y++) {
+    for(int x = 0; x < xSize; x++) {
+      Loc loc = Location::getLoc(x, y, xSize);
+      Color c = board.colors[loc];
+      if(c == C_BLACK || c == C_BLACK_CAPTURED) {
+        if(!hasAB) {
+          out << "AB";
+          hasAB = true;
+        }
+        out << "[";
+        writeLoc(loc);
+        out << "]";
+      }
+    }
+  }
+
+  bool hasAW = false;
+  for(int y = 0; y < ySize; y++) {
+    for(int x = 0; x < xSize; x++) {
+      Loc loc = Location::getLoc(x, y, xSize);
+      Color c = board.colors[loc];
+      if(c == C_WHITE || c == C_WHITE_CAPTURED) {
+        if(!hasAW) {
+          out << "AW";
+          hasAW = true;
+        }
+        out << "[";
+        writeLoc(loc);
+        out << "]";
+      }
+    }
+  }
+
+  out << ")";
+}
 
 // int MainCmds::sandbox() {
 //   Board::initHash();
@@ -192,7 +252,7 @@ using namespace std;
 //   return 0;
 // }
 
-int MainCmds::sandbox() {
+void genBalancedSgf() {
   Rand rand;
   Board::initHash();
 
@@ -203,18 +263,90 @@ int MainCmds::sandbox() {
   ConfigParser cfg;
   Setup::initializeSession(cfg);
 
-  const std::string modelFile = "/home/anton/board_games/KataDotsRemote/run_arch/data/models/b10c256n-s7755264-d2493509/model.bin.gz";
+  const std::string modelFile =
+    "/home/anton/board_games/KataDotsRemote/run_arch/data/models/b10c256n-s11748992-d3376508/model.bin.gz";
   const std::string expectedSha256 = "";
   const int maxConcurrentEvals = 32;
   const int expectedConcurrentEvals = 1;
   const int defaultMaxBatchSize = 8;
 
   NNEvaluator* nnEval = Setup::initializeNNEvaluator(
-    modelFile, modelFile, expectedSha256, cfg, logger, rand,
-    maxConcurrentEvals, expectedConcurrentEvals,
-    Board::MAX_LEN, Board::MAX_LEN, defaultMaxBatchSize,
-    false, false, Setup::SETUP_FOR_GTP
-  );
+    modelFile,
+    modelFile,
+    expectedSha256,
+    cfg,
+    logger,
+    rand,
+    maxConcurrentEvals,
+    expectedConcurrentEvals,
+    Board::MAX_LEN,
+    Board::MAX_LEN,
+    defaultMaxBatchSize,
+    false,
+    false,
+    Setup::SETUP_FOR_GTP);
+
+  SearchParams params;
+  params.numThreads = 1;
+  Search* search = new Search(params, nnEval, &logger, "sandbox");
+
+  auto res = RandomOpening::getOpenings(search, search, rand, 20, 12, 12);
+
+  std::string writedir = "./balanced_openings/";
+  std::filesystem::create_directories(writedir);
+
+  int i = 0;
+  for(RandomOpening::Opening elem: res) {
+    bool captured = false;
+    for(auto x: elem.board.colors) {
+      if(x == C_BLACK_CAPTURED || x == C_WHITE_CAPTURED) {
+        captured = true;
+        break;
+      }
+    }
+    if(!captured) {
+      std::ofstream out(writedir + "openingb12_" + std::to_string(i) + ".sgf");
+      writeSgfPosition(out, elem.board, elem.nextPlayer);
+      i++;
+    }
+  }
+}
+
+int MainCmds::sandbox() {
+    genBalancedSgf();
+    return 0;
+  Rand rand;
+  Board::initHash();
+
+  // --- Set up neural net + search wrapper ---
+  const bool logToStdout = true;
+  Logger logger(nullptr, logToStdout);
+
+  ConfigParser cfg;
+  Setup::initializeSession(cfg);
+
+  const std::string modelFile =
+    "/home/anton/board_games/KataDotsRemote/run_arch/data/models/b10c256n-s7755264-d2493509/model.bin.gz";
+  const std::string expectedSha256 = "";
+  const int maxConcurrentEvals = 32;
+  const int expectedConcurrentEvals = 1;
+  const int defaultMaxBatchSize = 8;
+
+  NNEvaluator* nnEval = Setup::initializeNNEvaluator(
+    modelFile,
+    modelFile,
+    expectedSha256,
+    cfg,
+    logger,
+    rand,
+    maxConcurrentEvals,
+    expectedConcurrentEvals,
+    Board::MAX_LEN,
+    Board::MAX_LEN,
+    defaultMaxBatchSize,
+    false,
+    false,
+    Setup::SETUP_FOR_GTP);
 
   SearchParams params;
   params.numThreads = 1;
@@ -226,8 +358,8 @@ int MainCmds::sandbox() {
     NNResultBuf buf;
     bot->nnEvaluator->evaluate(b, h, np, nnInputParams, buf, false);
     std::shared_ptr<NNOutput> out = std::move(buf.result);
-    double value = out->whiteWinProb ;
-    return (np == C_BLACK) ? (1.-value) : value;
+    double value = out->whiteWinProb;
+    return (np == C_BLACK) ? (1. - value) : value;
   };
 
   // --- Generate and evaluate initRandom openings ---
@@ -237,12 +369,16 @@ int MainCmds::sandbox() {
     Board b(20, 20);
     BoardHistory h(b, pla, Rules());
     // RandomOpening::initRandomOpening(b, h, pla, rand);
-    RandomOpening::initBalanced(search, search, b,h, pla, rand );
+    RandomOpening::initBalanced(search, search, b, h, pla, rand);
 
     double value = getBoardValue(search, b, h, pla);
-    std::cout << "=== opening " << i << ": nextPlayer=" << (pla == P_BLACK ? "B" : "W")
-              << " value=" << value << " ===" << std::endl;
+    std::cout << "=== opening " << i << ": nextPlayer=" << (pla == P_BLACK ? "B" : "W") << " value=" << value
+              << " ===" << std::endl;
     Board::printBoard(std::cout, b, 0, nullptr);
+
+    ofstream sgfOut("opening_" + Global::intToString(i) + ".sgf");
+    writeSgfPosition(sgfOut, b, pla);
+    sgfOut.close();
   }
 
   nnEval->killServerThreads();
@@ -252,7 +388,6 @@ int MainCmds::sandbox() {
   std::cout << "Done" << std::endl;
   return 0;
 }
-
 
 // #include <cuda.h>
 // #include <cublas_v2.h>

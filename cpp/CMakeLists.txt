@@ -51,10 +51,10 @@ if(USE_BACKEND STREQUAL "CUDA")
   )
 # https://en.wikipedia.org/wiki/CUDA#GPUs_supported
   if(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 12.0)
-    set(CMAKE_CUDA_ARCHITECTURES 50 52 53 60 61 62 70 72 75 80 86 87 90)
+    set(CMAKE_CUDA_ARCHITECTURES 75 80 86 87 90)
     set(CMAKE_CUDA_FLAGS "-Wno-deprecated-gpu-targets")
   elseif(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.8)
-    set(CMAKE_CUDA_ARCHITECTURES 35 37 50 52 53 60 61 62 70 72 75 80 86 87 90)
+    set(CMAKE_CUDA_ARCHITECTURES 53 60 61 62 70 72 75 80 86 87 90)
     set(CMAKE_CUDA_FLAGS "-Wno-deprecated-gpu-targets")
   elseif(CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER_EQUAL 11.5)
     set(CMAKE_CUDA_ARCHITECTURES 35 37 50 52 53 60 61 62 70 72 75 80 86 87)
@@ -232,6 +232,7 @@ add_executable(katago
   distributed/client.cpp
   command/commandline.cpp
   command/analysis.cpp
+  command/balancedopenings.cpp
   command/benchmark.cpp
   command/contribute.cpp
   command/evalsgf.cpp

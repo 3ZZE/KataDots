@@ -100,6 +100,8 @@ static int handleSubcommand(const string& subcommand, const vector<string>& args
     return MainCmds::sampleinitializations(subArgs);
   else if(subcommand == "printclockinfo")
     return MainCmds::printclockinfo(subArgs);
+  else if(subcommand == "genbalancedopenings")
+    return MainCmds::genbalancedopenings(subArgs);
   else if(subcommand == "sandbox")
     return MainCmds::sandbox();
   else if(subcommand == "version") {
