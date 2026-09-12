@@ -10,8 +10,9 @@ namespace RandomOpening {
     Board board;
     BoardHistory hist;
     Player nextPlayer;
+    Opening(int x_size, int y_size);
   };
-  std::vector<Opening> getOpenings(Search* botB, Search* botW, Rand& gameRand, int cnt);
+  std::vector<Opening> getOpenings(Search* botB, Search* botW, Rand& gameRand, int cnt, int x, int y);
 
   void initRandomOpening(Board& board, BoardHistory& hist, Player& nextPlayer, Rand& gameRand);
 

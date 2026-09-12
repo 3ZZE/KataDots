@@ -297,6 +297,9 @@ static bool tryInitBalanced(
   Search* bot = gameRand.nextBool(0.5) ? botB : botW;
   for(int i = 0; i < 3; i++) {
     makeEqualMove(bot, boardCopy, histCopy, nextPlayerCopy);
+    // Loc loc = getBalanceMove(bot, bot, boardCopy, hist, nextPlayerCopy, gameRand, false, 0.8);
+    //     hist.makeBoardMoveAssumeLegal(boardCopy, loc, nextPlayerCopy);
+    //     nextPlayerCopy = getOpp(nextPlayerCopy);
   }
 
   board = boardCopy;
@@ -324,17 +327,24 @@ void RandomOpening::initBalanced(
     }
   }
 }
+Opening::Opening(int x, int y) {
+    board = Board(x, y);
+    hist = BoardHistory();
+    nextPlayer = P_BLACK;
+
+}
 
 std::vector<Opening> RandomOpening::getOpenings(
   Search* botB,
   Search* botW,
   Rand& gameRand,
-  int cnt
-
+    int cnt,
+    int x, 
+    int y
 ) {
   std::vector<Opening> vecres;
   for(int i = 0; i < cnt; i++) {
-    Opening opening;
+    Opening opening = Opening(x, y);
     RandomOpening::initBalanced(botB, botW, opening.board, opening.hist, opening.nextPlayer, gameRand);
     vecres.push_back(opening);
   }
