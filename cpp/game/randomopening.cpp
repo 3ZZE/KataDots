@@ -145,7 +145,7 @@ void RandomOpening::initializeCross(Board& board, BoardHistory& hist, Player& ne
   int dx = gameRand.nextUInt(7) - 3;
   int dy = gameRand.nextUInt(7) - 3;
   int xh = board.x_size / 2 + dx;
-  int yh = board.x_size / 2 + dy;
+  int yh = board.y_size / 2 + dy;
 
   if(gameRand.nextBool(0.5)) {
     int loc = Location::getLoc(xh, yh, board.x_size);
