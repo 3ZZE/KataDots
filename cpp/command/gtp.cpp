@@ -674,6 +674,11 @@ struct GTPEngine {
     responseIsError = false;
     maybeStartPondering = false;
 
+    if(bot->getRootHist().isGameFinished) {
+      response = args.analyzing ? "play pass" : "pass";
+      return;
+    }
+
     nnEval->clearStats();
     TimeControls tc = pla == P_BLACK ? bTimeControls : wTimeControls;
 

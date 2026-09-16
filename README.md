@@ -1,17 +1,6 @@
-***2023.1.8 Engine based on Katago 1.12 start Modifying***   
+### KataGomo repo: https://github.com/hzyhhzy/KataGomo/
+### KataGo repo: https://github.com/hzyhhzy/KataGomo/
 
-This branch(BWnoscore2023) removed komi and score
-Branch "BW2023" reserved komi and score
-  
-  
-| Tasks                                                  | Branch         | Stage        | Notes                              |
-| :----------------------------------------------------- | :------------- | :----------- | :--------------------------------- |
-| **(THIS)** 4 Black-White board games(Remove Capture)   | BW2023         | **Finished** | Using Gomoku as a representative, very easy to be modified to other games
-| **(NEXT)** 4.1 Gomoku                                  | Gom2023        | Doing        | New Katagomo engine
-| **(NEXT)** 5 Chess-like games(Multi-stage moves)       | Movestone2023  | Doing        | Maybe using Breakthrough or Ataxx as a representative, very easy to be modified to other games    |	
-	
-	
-	
 	
 # KataGo
 
