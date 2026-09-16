@@ -47,9 +47,6 @@ Color GameLogic::checkWinnerAfterPlayed(
   const BoardHistory& hist,
   Player pla,
   Loc loc) {
-    if (loc == 1)  { // PASS
-        ASSERT_UNREACHABLE;
-    }
     const Color color = pla;
     const Color opp_clr = getOpp(pla);
 
@@ -147,23 +144,52 @@ Color GameLogic::checkWinnerAfterPlayed(
             }
         }
     }
+
+    if (loc == 1)  { // PASS
+        if (pla == P_WHITE) {
+            int total_white = captured_white + maybe_captured_white + notsafe_white;
+            if (captured_black > total_white) {
+                return C_WHITE;
+            } else if ( captured_black == total_white) {
+                return C_EMPTY;
+            } else {
+                return C_BLACK;
+            }
+        } else if (pla == P_BLACK) {
+            int total_black = captured_black + maybe_captured_black + notsafe_black;
+            if (captured_white > total_black) {
+                return C_BLACK;
+            } else if ( captured_white == total_black) {
+                return C_EMPTY;
+            } else{ 
+                return C_WHITE; 
+            }
+        } else {
+        ASSERT_UNREACHABLE;
+        }
+    }
+
   if (captured_white > captured_black + maybe_captured_black + notsafe_black) {
         return C_BLACK;
     }
 
-  if (captured_black >= captured_white + maybe_captured_white + notsafe_white) {
+  if (captured_black > captured_white + maybe_captured_white + notsafe_white) {
         return C_WHITE;
     }
     if (notsafe_white == 0 && notsafe_black == 0) {
         assert(maybe_captured_black == 0);
         assert(maybe_captured_white == 0);
-        return C_WHITE;
+        return C_EMPTY;
     }
     if (empty_cnt == 0) {
-        if (captured_black + notsafe_black + maybe_captured_black >= captured_white + notsafe_black +maybe_captured_white) {
+            int total_black = captured_black + maybe_captured_black + notsafe_black;
+            int total_white = captured_white + maybe_captured_white + notsafe_white;
+        if (total_black > total_white) {
             return C_WHITE;
-        } else {
+        } else if (total_white >  total_black) {
             return C_BLACK;
+        } else {
+            return C_EMPTY;
         }
     }
     return C_WALL;

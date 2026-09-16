@@ -56,7 +56,7 @@ static double getBoardValue(Search* bot, const Board& board, const BoardHistory&
   NNResultBuf buf;
   nnEval->evaluate(board, hist, nextPlayer, nnInputParams, buf, false);
   std::shared_ptr<NNOutput> nnOutput = std::move(buf.result);
-  double value = nnOutput->whiteWinProb - nnOutput->whiteLossProb;
+  double value = nnOutput->whiteWinProb - 0.5;
   if(nextPlayer == C_BLACK)
     return -value;
   else
@@ -169,101 +169,6 @@ void RandomOpening::initializeCross(Board& board, BoardHistory& hist, Player& ne
   nextPlayer = P_BLACK;
 }
 
-static Loc getBalanceMove(
-  Search* botB,
-  Search* botW,
-  const Board& board,
-  const BoardHistory& hist,
-  Player nextPlayer,
-  Rand& gameRand,
-  bool forSelfplay,
-  double rejectProb) {
-  int xsize = board.x_size;
-  int ysize = board.y_size;
-
-  Search* bot = gameRand.nextBool(0.5) ? botB : botW;
-  double maxProb = 0;
-
-  double rootValuePla = getBoardValue(bot, board, hist, nextPlayer);
-  if(rootValuePla < 0) {
-    double rejectFactor = 1 - std::exp(-3 * rootValuePla * rootValuePla);
-    if(gameRand.nextBool(rejectFactor) && gameRand.nextBool(rejectProb))
-      return Board::NULL_LOC;
-  }
-
-  double rootValueOpp = getBoardValue(bot, board, hist, getOpp(nextPlayer));
-  if(rootValueOpp < 0) {
-    double rejectFactor = 1 - std::exp(-3 * rootValueOpp * rootValueOpp);
-    if(gameRand.nextBool(rejectFactor) && gameRand.nextBool(rejectProb))
-      return Board::NULL_LOC;
-  }
-
-  bool shouldCheckNearbyStones = rootValueOpp > 0 && board.stonenum > 0;
-
-  std::vector<double> prob(xsize * ysize, 0);
-  for(int x = 0; x < xsize; x++) {
-    for(int y = 0; y < ysize; y++) {
-      Loc loc = Location::getLoc(x, y, xsize);
-
-      if(!board.isLegal(loc, nextPlayer))
-        continue;
-
-      if(shouldCheckNearbyStones) {
-        bool nearExistingStone = false;
-        for(int x1 = x - 3; x1 <= x + 3; x1++) {
-          for(int y1 = y - 3; y1 <= y + 3; y1++) {
-            if(x1 < 0 || x1 >= xsize || y1 < 0 || y1 >= ysize)
-              continue;
-            Loc loc1 = Location::getLoc(x1, y1, xsize);
-            if(board.colors[loc1] != C_EMPTY)
-              nearExistingStone = true;
-            if(nearExistingStone)
-              break;
-          }
-          if(nearExistingStone)
-            break;
-        }
-        if(!nearExistingStone)
-          continue;
-      }
-
-      Board boardCopy(board);
-      BoardHistory histCopy(hist);
-
-      histCopy.makeBoardMoveAssumeLegal(boardCopy, loc, nextPlayer);
-      if(histCopy.isGameFinished)
-        continue;
-
-      double value = getBoardValue(bot, boardCopy, histCopy, getOpp(nextPlayer));
-
-      double p = forSelfplay ? std::pow(1 - value * value, 4) : std::pow(1 - value * value, 10);
-      maxProb = std::max(maxProb, p);
-      prob[y * xsize + x] = p;
-    }
-  }
-
-  if(gameRand.nextBool(1 - maxProb) && gameRand.nextBool(rejectProb))
-    return Board::NULL_LOC;
-
-  double totalProb = 0;
-  for(int x = 0; x < xsize; x++)
-    for(int y = 0; y < ysize; y++)
-      totalProb += prob[y * xsize + x];
-
-  if(totalProb <= 0.0)
-    return Board::NULL_LOC;
-
-  double randomDouble = gameRand.nextDouble(totalProb);
-  double probSum = 0;
-  for(int x = 0; x < xsize; x++)
-    for(int y = 0; y < ysize; y++) {
-      probSum += prob[y * xsize + x];
-      if(probSum >= randomDouble)
-        return Location::getLoc(x, y, xsize);
-    }
-
-  return Board::NULL_LOC;
-}
 
 static bool tryInitBalanced(
   Search* botB,
