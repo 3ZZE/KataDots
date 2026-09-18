@@ -50,17 +50,15 @@ static Loc getRandomGaussianCenterEmptyLoc(Board& board, Rand& gameRand, double 
   return locs[locs.size() - 1];
 }
 
-static double getBoardValue(Search* bot, const Board& board, const BoardHistory& hist, Player nextPlayer) {
+static double getBoardDisbalance(Search* bot, const Board& board, const BoardHistory& hist, Player nextPlayer) {
   NNEvaluator* nnEval = bot->nnEvaluator;
   MiscNNInputParams nnInputParams;
   NNResultBuf buf;
   nnEval->evaluate(board, hist, nextPlayer, nnInputParams, buf, false);
   std::shared_ptr<NNOutput> nnOutput = std::move(buf.result);
-  double value = nnOutput->whiteWinProb - 0.5;
-  if(nextPlayer == C_BLACK)
-    return -value;
-  else
-    return value;
+  double value1 = std::fabs(nnOutput->whiteWinProb - 0.5);
+  double value2 = std::fabs(nnOutput->whiteLossProb - 0.5);
+  return std::min(value1, value2);
 }
 
 static void makeEqualMove(Search* bot, Board& board, BoardHistory& hist, Player& nextPlayer) {
@@ -82,7 +80,7 @@ static void makeEqualMove(Search* bot, Board& board, BoardHistory& hist, Player&
       if(histCopy.isGameFinished)
         continue;
 
-      double value = getBoardValue(bot, boardCopy, histCopy, getOpp(nextPlayer));
+      double value = getBoardDisbalance(bot, boardCopy, histCopy, getOpp(nextPlayer));
       double absValue = std::fabs(value);
       if(absValue < bestAbsValue) {
         bestAbsValue = absValue;
@@ -169,15 +167,8 @@ void RandomOpening::initializeCross(Board& board, BoardHistory& hist, Player& ne
   nextPlayer = P_BLACK;
 }
 
-
-static bool tryInitBalanced(
-  Search* botB,
-  Search* botW,
-  Board& board,
-  BoardHistory& hist,
-  Player& nextPlayer,
-  Rand& gameRand
-  ) {
+static bool
+tryInitBalanced(Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& nextPlayer, Rand& gameRand) {
   Board boardCopy(board);
   BoardHistory histCopy(hist);
   Player nextPlayerCopy = nextPlayer;
@@ -219,31 +210,23 @@ void RandomOpening::initBalanced(
   Rand& gameRand) {
   const int maxTryTimes = 100;
   int tryTimes = 0;
-  while(!tryInitBalanced(botB, botW, board, hist, nextPlayer, gameRand )) {
+  while(!tryInitBalanced(botB, botW, board, hist, nextPlayer, gameRand)) {
     tryTimes++;
     if(tryTimes > maxTryTimes) {
       tryTimes = 0;
       std::cout << "Reached max trying times for finding balanced openings, Rule=" << hist.rules.toString()
                 << std::endl;
-            return;
+      return;
     }
   }
 }
 Opening::Opening(int x, int y) {
-    board = Board(x, y);
-    hist = BoardHistory();
-    nextPlayer = P_BLACK;
-
+  board = Board(x, y);
+  hist = BoardHistory();
+  nextPlayer = P_BLACK;
 }
 
-std::vector<Opening> RandomOpening::getOpenings(
-  Search* botB,
-  Search* botW,
-  Rand& gameRand,
-    int cnt,
-    int x, 
-    int y
-) {
+std::vector<Opening> RandomOpening::getOpenings(Search* botB, Search* botW, Rand& gameRand, int cnt, int x, int y) {
   std::vector<Opening> vecres;
   for(int i = 0; i < cnt; i++) {
     Opening opening = Opening(x, y);
@@ -253,13 +236,19 @@ std::vector<Opening> RandomOpening::getOpenings(
   return vecres;
 }
 
-void RandomOpening::initHub(Search* botB, Search* botW, Board& board, BoardHistory& hist, Player& nextPlayer, Rand& gameRand) {
-    double rand = gameRand.nextDouble();
-    if (rand < 0.0) {
-        RandomOpening::initBalanced(botB, botW , board, hist, nextPlayer, gameRand);
-    } else if (rand < 0.5) {
-        RandomOpening::initRandomOpening(board, hist, nextPlayer, gameRand);
-    } else {
-        RandomOpening::initializeCross(board, hist, nextPlayer, gameRand);
-    }
+void RandomOpening::initHub(
+  Search* botB,
+  Search* botW,
+  Board& board,
+  BoardHistory& hist,
+  Player& nextPlayer,
+  Rand& gameRand) {
+  double rand = gameRand.nextDouble();
+  if(rand < 0.0) {
+    RandomOpening::initBalanced(botB, botW, board, hist, nextPlayer, gameRand);
+  } else if(rand < 0.5) {
+    RandomOpening::initRandomOpening(board, hist, nextPlayer, gameRand);
+  } else {
+    RandomOpening::initializeCross(board, hist, nextPlayer, gameRand);
+  }
 }

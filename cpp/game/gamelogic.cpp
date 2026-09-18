@@ -58,6 +58,9 @@ Color GameLogic::checkWinnerAfterPlayed(
         }
     }
     if (board.x_size * board.y_size < 2 + empty_cnt) {
+        if (loc == 1) {
+            return opp_clr;
+        }
         return C_WALL;
     }
 
