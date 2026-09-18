@@ -50,18 +50,25 @@ static Loc getRandomGaussianCenterEmptyLoc(Board& board, Rand& gameRand, double 
   return locs[locs.size() - 1];
 }
 
-static double getBoardDisbalance(Search* bot, const Board& board, const BoardHistory& hist, Player nextPlayer) {
+static double getBoardDisbalance(
+  Search* bot,
+  const Board& board,
+  const BoardHistory& hist,
+  Player nextPlayer,
+  Player playerToBalance) {
   NNEvaluator* nnEval = bot->nnEvaluator;
   MiscNNInputParams nnInputParams;
   NNResultBuf buf;
   nnEval->evaluate(board, hist, nextPlayer, nnInputParams, buf, false);
   std::shared_ptr<NNOutput> nnOutput = std::move(buf.result);
-  double value1 = std::fabs(nnOutput->whiteWinProb - 0.5);
-  double value2 = std::fabs(nnOutput->whiteLossProb - 0.5);
-  return std::min(value1, value2);
+  if(playerToBalance == P_WHITE) {
+    return std::fabs(nnOutput->whiteLossProb - 0.5);
+  } else {
+    return std::fabs(nnOutput->whiteWinProb - 0.5);
+  }
 }
 
-static void makeEqualMove(Search* bot, Board& board, BoardHistory& hist, Player& nextPlayer) {
+static void makeEqualMove(Search* bot, Board& board, BoardHistory& hist, Player& nextPlayer, Player& playerToBalance) {
   int xsize = board.x_size;
   int ysize = board.y_size;
 
@@ -80,7 +87,7 @@ static void makeEqualMove(Search* bot, Board& board, BoardHistory& hist, Player&
       if(histCopy.isGameFinished)
         continue;
 
-      double value = getBoardDisbalance(bot, boardCopy, histCopy, getOpp(nextPlayer));
+      double value = getBoardDisbalance(bot, boardCopy, histCopy, getOpp(nextPlayer), playerToBalance);
       double absValue = std::fabs(value);
       if(absValue < bestAbsValue) {
         bestAbsValue = absValue;
@@ -190,9 +197,10 @@ tryInitBalanced(Search* botB, Search* botW, Board& board, BoardHistory& hist, Pl
     pla = nextPlayerCopy;
   }
 
+  Player oppla = gameRand.nextBool(0.5) ? P_BLACK : P_WHITE;
   Search* bot = gameRand.nextBool(0.5) ? botB : botW;
   for(int i = 0; i < 3; i++) {
-    makeEqualMove(bot, boardCopy, histCopy, nextPlayerCopy);
+    makeEqualMove(bot, boardCopy, histCopy, nextPlayerCopy, oppla);
   }
 
   board = boardCopy;
